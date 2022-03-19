@@ -56,12 +56,14 @@ public class Broker {
         InetSocketAddress target;
 
         int index = cc.indexOf(msg.getSender());
+
         if(fish.getDirection() == Direction.RIGHT)
             target = cc.getRightNeighorOf(index);
         else
             target = cc.getLeftNeighorOf(index);
 
-        ep.send(target, fish);
+
+        ep.send(target, msg.getPayload());
     }
 
     public static void main(String[] args) {
