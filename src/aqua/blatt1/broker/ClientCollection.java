@@ -9,6 +9,7 @@ import java.util.List;
  */
 
 public class ClientCollection<T> {
+
 	private class Client {
 		final String id;
 		final T client;
