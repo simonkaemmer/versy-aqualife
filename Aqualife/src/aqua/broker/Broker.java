@@ -19,10 +19,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Broker {
 
-    Boolean stopRequested;
+    volatile Boolean stopRequested;
     ClientCollection<InetSocketAddress> clientCollection;
     Endpoint endpoint;
-    ExecutorService pool;
+    ExecutorService pool;                                                         // Kerne / CPU-Intensität
     private static final int POOL_SIZE = (int) (Runtime.getRuntime().availableProcessors() / 0.5);
     ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
 
@@ -68,7 +68,7 @@ public class Broker {
         this.pool = Executors.newFixedThreadPool(POOL_SIZE);
         pool.execute(new StopRequested());
     }
-
+    //Dispatcher
     public void broker() {
         Message msg;
         while (!this.stopRequested) {
