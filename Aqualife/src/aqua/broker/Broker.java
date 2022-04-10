@@ -83,10 +83,6 @@ public class Broker {
         this.reentrantReadWriteLock.writeLock().lock();
         clientCollection.add(clientId, sender);
 
-   /*     if (clientCollection.size() == 1) {
-            endpoint.send(sender, new Token());
-        }*/
-
         InetSocketAddress leftNeighbor = clientCollection.getLeftNeighborOf(clientCollection.indexOf(sender));
         InetSocketAddress rightNeighbor = clientCollection.getRightNeighborOf(clientCollection.indexOf(sender));
 
@@ -98,6 +94,11 @@ public class Broker {
         endpoint.send(leftNeighbor, leftNeighborUpdate);
         endpoint.send(rightNeighbor, rightNeighborUpdate);
         endpoint.send(sender, new RegisterResponse(clientId));
+
+        if (clientCollection.size() == 1) {
+            endpoint.send(sender, new Token());
+        }
+
         this.reentrantReadWriteLock.writeLock().unlock();
     }
 

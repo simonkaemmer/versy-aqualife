@@ -34,6 +34,10 @@ public class ClientCommunicator {
 			endpoint.send(neighbor, new HandoffRequest(fish));
 		}
 
+		public void forwardToken(InetSocketAddress addr) {
+			endpoint.send(addr, new Token());
+		}
+
 /*		public void giveBackToken(InetSocketAddress receiver) {
 			endpoint.send(receiver, new Token());
 		}*/
@@ -56,6 +60,10 @@ public class ClientCommunicator {
 
 				if (msg.getPayload() instanceof HandoffRequest)
 					tankModel.receiveFish(((HandoffRequest) msg.getPayload()).getFish());
+
+				if (msg.getPayload() instanceof Token)
+					tankModel.receiveToken();
+					System.out.println(msg.getSender());
 
 				if (msg.getPayload() instanceof NeighborUpdate) {
 					NeighborUpdate neighborUpdate = (NeighborUpdate) msg.getPayload();
