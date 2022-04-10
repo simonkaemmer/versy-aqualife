@@ -5,18 +5,16 @@
 
 package aqua.common.msgtypes;
 
-import aqua.common.Direction;
-
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 
-public final class NeighbourUpdate implements Serializable {
+public final class NeighborUpdate implements Serializable {
 
 	private InetSocketAddress left;
 	private InetSocketAddress right;
 	private String id;
 
-	public NeighbourUpdate(String id, InetSocketAddress left, InetSocketAddress right) {
+	public NeighborUpdate(String id, InetSocketAddress left, InetSocketAddress right) {
 		this.id = id;
 		this.left = left;
 		this.right = right;

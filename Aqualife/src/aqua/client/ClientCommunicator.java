@@ -2,7 +2,6 @@ package aqua.client;
 
 import java.net.InetSocketAddress;
 
-import aqua.common.Direction;
 import aqua.common.msgtypes.*;
 import messaging.Endpoint;
 import messaging.Message;
@@ -31,8 +30,8 @@ public class ClientCommunicator {
 			endpoint.send(broker, new DeregisterRequest(id));
 		}
 
-		public void handOff(FishModel fish, InetSocketAddress neighbour) {
-			endpoint.send(neighbour, new HandoffRequest(fish));
+		public void handOff(FishModel fish, InetSocketAddress neighbor) {
+			endpoint.send(neighbor, new HandoffRequest(fish));
 		}
 
 /*		public void giveBackToken(InetSocketAddress receiver) {
@@ -58,15 +57,15 @@ public class ClientCommunicator {
 				if (msg.getPayload() instanceof HandoffRequest)
 					tankModel.receiveFish(((HandoffRequest) msg.getPayload()).getFish());
 
-				if (msg.getPayload() instanceof NeighbourUpdate) {
-					NeighbourUpdate neighbourUpdate = (NeighbourUpdate) msg.getPayload();
-					if (neighbourUpdate.getLeftNeighbor() != null)
-						tankModel.leftNeighbour = neighbourUpdate.getLeftNeighbor();
-					if (neighbourUpdate.getRightNeighbor() != null)
-						tankModel.rightNeighbour = neighbourUpdate.getRightNeighbor();
+				if (msg.getPayload() instanceof NeighborUpdate) {
+					NeighborUpdate neighborUpdate = (NeighborUpdate) msg.getPayload();
+					if (neighborUpdate.getLeftNeighbor() != null)
+						tankModel.leftNeighbor = neighborUpdate.getLeftNeighbor();
+					if (neighborUpdate.getRightNeighbor() != null)
+						tankModel.rightNeighbor = neighborUpdate.getRightNeighbor();
 
-					System.out.println("left neighbour " + tankModel.leftNeighbour);
-					System.out.println("right neighbour " + tankModel.rightNeighbour);
+					System.out.println("left neighbour " + tankModel.leftNeighbor);
+					System.out.println("right neighbour " + tankModel.rightNeighbor);
 					System.out.println("_______________________________________________");
 				}
 

@@ -82,7 +82,6 @@ public class Broker {
         String clientId = "tank" + this.clientCollection.size();
         this.reentrantReadWriteLock.writeLock().lock();
         clientCollection.add(clientId, sender);
-        this.reentrantReadWriteLock.writeLock().unlock();
 
    /*     if (clientCollection.size() == 1) {
             endpoint.send(sender, new Token());
@@ -91,14 +90,15 @@ public class Broker {
         InetSocketAddress leftNeighbor = clientCollection.getLeftNeighborOf(clientCollection.indexOf(sender));
         InetSocketAddress rightNeighbor = clientCollection.getRightNeighborOf(clientCollection.indexOf(sender));
 
-        NeighbourUpdate senderNeighborUpdate = new NeighbourUpdate(clientId, leftNeighbor, rightNeighbor);
-        NeighbourUpdate leftNeighborUpdate = new NeighbourUpdate("left", clientCollection.getLeftNeighborOf(clientCollection.indexOf(leftNeighbor)), sender);
-        NeighbourUpdate rightNeighborUpdate = new NeighbourUpdate("right", sender, clientCollection.getRightNeighborOf(clientCollection.indexOf(rightNeighbor)));
+        NeighborUpdate senderNeighborUpdate = new NeighborUpdate(clientId, leftNeighbor, rightNeighbor);
+        NeighborUpdate leftNeighborUpdate = new NeighborUpdate("left", clientCollection.getLeftNeighborOf(clientCollection.indexOf(leftNeighbor)), sender);
+        NeighborUpdate rightNeighborUpdate = new NeighborUpdate("right", sender, clientCollection.getRightNeighborOf(clientCollection.indexOf(rightNeighbor)));
 
         endpoint.send(sender, senderNeighborUpdate);
         endpoint.send(leftNeighbor, leftNeighborUpdate);
         endpoint.send(rightNeighbor, rightNeighborUpdate);
         endpoint.send(sender, new RegisterResponse(clientId));
+        this.reentrantReadWriteLock.writeLock().unlock();
     }
 
     public void deregister(Message message) {
@@ -111,8 +111,8 @@ public class Broker {
         InetSocketAddress leftNeighbor = clientCollection.getLeftNeighborOf(clientCollection.indexOf(tankId));
         InetSocketAddress rightNeighbor = clientCollection.getRightNeighborOf(clientCollection.indexOf(tankId));
 
-        NeighbourUpdate leftNeighborUpdate = new NeighbourUpdate("left", clientCollection.getLeftNeighborOf(clientCollection.indexOf(leftNeighbor)), rightNeighbor);
-        NeighbourUpdate rightNeighborUpdate = new NeighbourUpdate("right", leftNeighbor, clientCollection.getRightNeighborOf(clientCollection.indexOf(rightNeighbor)));
+        NeighborUpdate leftNeighborUpdate = new NeighborUpdate("left", clientCollection.getLeftNeighborOf(clientCollection.indexOf(leftNeighbor)), rightNeighbor);
+        NeighborUpdate rightNeighborUpdate = new NeighborUpdate("right", leftNeighbor, clientCollection.getRightNeighborOf(clientCollection.indexOf(rightNeighbor)));
 
         this.reentrantReadWriteLock.writeLock().lock();
         clientCollection.remove(tankIndex);
