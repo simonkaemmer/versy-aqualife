@@ -2,10 +2,7 @@ package aqua.broker;
 
 import aqua.common.Direction;
 import aqua.common.FishModel;
-import aqua.common.msgtypes.DeregisterRequest;
-import aqua.common.msgtypes.HandoffRequest;
-import aqua.common.msgtypes.RegisterRequest;
-import aqua.common.msgtypes.RegisterResponse;
+import aqua.common.msgtypes.*;
 import messaging.Endpoint;
 import messaging.Message;
 
@@ -41,9 +38,9 @@ public class Broker {
             InetSocketAddress sender = this.msg.getSender();
 
             if (payload instanceof RegisterRequest) {
-                register(sender);
+                register(msg);
             } else if (payload instanceof DeregisterRequest) {
-                deregister((DeregisterRequest) payload);
+                deregister(msg);
             } else if (payload instanceof HandoffRequest) {
                 handoffFish((HandoffRequest) payload, sender);
             } else if (payload instanceof PoisonPill) {
@@ -80,19 +77,51 @@ public class Broker {
         System.out.println("Exited Broker");
     }
 
-    public void register(InetSocketAddress sender) {
-        this.reentrantReadWriteLock.readLock().lock();
+    public void register(Message message)  {
+        InetSocketAddress sender = message.getSender();
         String clientId = "tank" + this.clientCollection.size();
-        this.clientCollection.add(clientId, sender);
-        this.endpoint.send(sender, new RegisterResponse(clientId));
-        this.reentrantReadWriteLock.readLock().unlock();
+        this.reentrantReadWriteLock.writeLock().lock();
+        clientCollection.add(clientId, sender);
+        this.reentrantReadWriteLock.writeLock().unlock();
+
+   /*     if (clientCollection.size() == 1) {
+            endpoint.send(sender, new Token());
+        }*/
+
+        InetSocketAddress leftNeighbor = clientCollection.getLeftNeighborOf(clientCollection.indexOf(sender));
+        InetSocketAddress rightNeighbor = clientCollection.getRightNeighborOf(clientCollection.indexOf(sender));
+
+        NeighbourUpdate senderNeighborUpdate = new NeighbourUpdate(clientId, leftNeighbor, rightNeighbor);
+        NeighbourUpdate leftNeighborUpdate = new NeighbourUpdate("left", clientCollection.getLeftNeighborOf(clientCollection.indexOf(leftNeighbor)), sender);
+        NeighbourUpdate rightNeighborUpdate = new NeighbourUpdate("right", sender, clientCollection.getRightNeighborOf(clientCollection.indexOf(rightNeighbor)));
+
+        endpoint.send(sender, senderNeighborUpdate);
+        endpoint.send(leftNeighbor, leftNeighborUpdate);
+        endpoint.send(rightNeighbor, rightNeighborUpdate);
+        endpoint.send(sender, new RegisterResponse(clientId));
     }
 
-    public void deregister(DeregisterRequest payload) {
+    public void deregister(Message message) {
+        DeregisterRequest deregisterRequest = (DeregisterRequest) message.getPayload();
+        String tankId = deregisterRequest.getId();
         this.reentrantReadWriteLock.readLock().lock();
-        this.clientCollection.remove(this.clientCollection.indexOf(payload.getId()));
+        int tankIndex = clientCollection.indexOf(tankId);
         this.reentrantReadWriteLock.readLock().unlock();
+
+        InetSocketAddress leftNeighbor = clientCollection.getLeftNeighborOf(clientCollection.indexOf(tankId));
+        InetSocketAddress rightNeighbor = clientCollection.getRightNeighborOf(clientCollection.indexOf(tankId));
+
+        NeighbourUpdate leftNeighborUpdate = new NeighbourUpdate("left", clientCollection.getLeftNeighborOf(clientCollection.indexOf(leftNeighbor)), rightNeighbor);
+        NeighbourUpdate rightNeighborUpdate = new NeighbourUpdate("right", leftNeighbor, clientCollection.getRightNeighborOf(clientCollection.indexOf(rightNeighbor)));
+
+        this.reentrantReadWriteLock.writeLock().lock();
+        clientCollection.remove(tankIndex);
+        this.reentrantReadWriteLock.writeLock().unlock();
+
+        endpoint.send(leftNeighbor, leftNeighborUpdate);
+        endpoint.send(rightNeighbor, rightNeighborUpdate);
     }
+
 
     public void handoffFish(HandoffRequest payload, InetSocketAddress sender) {
         FishModel fish = payload.getFish();
