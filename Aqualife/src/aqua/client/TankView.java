@@ -1,16 +1,12 @@
 package aqua.client;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 import aqua.common.FishModel;
 
@@ -28,8 +24,13 @@ public class TankView extends JPanel implements Observer {
 			@Override
 			public void run() {
 				repaint();
+				if (tankModel.isSnapshotDone) {
+					tankModel.isSnapshotDone = false;
+					JOptionPane.showMessageDialog(TankView.this, "Total Fishies: " + tankModel.snapshotCollector.getFishies());
+				}
 			}
 		};
+
 
 		setPreferredSize(new Dimension(TankModel.WIDTH, TankModel.HEIGHT));
 		setBackground(new Color(175, 200, 235));
@@ -42,14 +43,19 @@ public class TankView extends JPanel implements Observer {
 		});
 	}
 
-	@SuppressWarnings("unused")
 	private void drawBorders(Graphics2D g2d) {
+		Stroke stroke = new BasicStroke(10f);
+		g2d.setStroke(stroke);
 		g2d.drawLine(0, 0, 0, TankModel.HEIGHT);
-		g2d.drawLine(TankModel.WIDTH - 1, 0, TankModel.WIDTH - 1, TankModel.HEIGHT);
+		g2d.drawLine(TankModel.WIDTH, 0, TankModel.WIDTH, TankModel.HEIGHT);
 	}
 
 	private void doDrawing(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
+
+		if (!tankModel.hasToken()) {
+			drawBorders(g2d);
+		}
 
 		for (FishModel fishModel : tankModel) {
 			g2d.drawImage(fishView.getImage(fishModel), fishModel.getX(), fishModel.getY(), null);

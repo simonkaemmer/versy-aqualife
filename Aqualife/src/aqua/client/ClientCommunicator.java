@@ -7,6 +7,7 @@ import messaging.Endpoint;
 import messaging.Message;
 import aqua.common.FishModel;
 import aqua.common.Properties;
+import aqua.common.msgtypes.CollectSnapshot;
 
 public class ClientCommunicator {
 	private final Endpoint endpoint;
@@ -36,6 +37,14 @@ public class ClientCommunicator {
 
 		public void forwardToken(InetSocketAddress addr) {
 			endpoint.send(addr, new Token());
+		}
+
+		public void sendSnapshotMarker(InetSocketAddress addr) {
+			endpoint.send(addr, new SnapshotMarker());
+		}
+
+		public void sendSnapshotCollectionMarker(InetSocketAddress addr, CollectSnapshot cs) {
+			endpoint.send(addr, cs);
 		}
 
 /*		public void giveBackToken(InetSocketAddress receiver) {
@@ -76,6 +85,32 @@ public class ClientCommunicator {
 					System.out.println("right neighbour " + tankModel.rightNeighbor);
 					System.out.println("_______________________________________________");
 				}
+
+
+
+				if (msg.getPayload() instanceof SnapshotMarker) {
+					if (msg.getSender().equals(tankModel.leftNeighbor))
+						tankModel.handleReceivedMarker("left");
+
+					else
+						tankModel.handleReceivedMarker("right");
+				}
+
+				if (msg.getPayload() instanceof CollectSnapshot) {
+					tankModel.hasSnapshotCollectToken = true;
+					tankModel.snapshotCollector = (CollectSnapshot) msg.getPayload();
+					if (tankModel.isInitiator) {
+						tankModel.isSnapshotDone = true;
+						tankModel.hasSnapshotCollectToken = false;
+						tankModel.isInitiator = false;
+					} else {
+						tankModel.hasSnapshotCollectToken = false;
+						tankModel.snapshotCollector.addFishies(tankModel.localState);
+						tankModel.forwarder.sendSnapshotCollectionMarker(tankModel.leftNeighbor, tankModel.snapshotCollector);
+					}
+				}
+
+
 
 /*				if (msg.getPayload() instanceof Token) {
 					tankModel.receiveToken();

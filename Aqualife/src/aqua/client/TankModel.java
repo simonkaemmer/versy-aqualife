@@ -5,6 +5,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import aqua.common.msgtypes.CollectSnapshot;
+import aqua.common.msgtypes.CollectSnapshot;
+
 import aqua.common.Direction;
 import aqua.common.FishModel;
 
@@ -22,6 +25,23 @@ public class TankModel extends Observable implements Iterable<FishModel> {
 	protected InetSocketAddress rightNeighbor;
 	protected volatile boolean hasToken = false;
 	protected Timer timer;
+	protected int localState;
+	protected boolean isInitiator = false;
+	protected volatile boolean hasSnapshotCollectToken = false;
+	protected volatile CollectSnapshot snapshotCollector = null;
+	protected volatile boolean isSnapshotDone = false;
+	private int fadingFishCounter = 0;
+	private RecordingMode recMode = RecordingMode.IDLE;
+
+
+
+
+	enum RecordingMode {
+		IDLE,
+		LEFT,
+		RIGHT,
+		BOTH
+	}
 
 	public TankModel(ClientCommunicator.ClientForwarder forwarder) {
 		this.fishies = Collections.newSetFromMap(new ConcurrentHashMap<FishModel, Boolean>());
@@ -49,6 +69,10 @@ public class TankModel extends Observable implements Iterable<FishModel> {
 	synchronized void receiveFish(FishModel fish) {
 		fish.setToStart();
 		fishies.add(fish);
+
+		if(this.recMode != RecordingMode.IDLE) {
+			this.localState++;
+		}
 	}
 
 	public String getId() {
@@ -101,8 +125,74 @@ public class TankModel extends Observable implements Iterable<FishModel> {
 				forwarder.forwardToken(TankModel.this.leftNeighbor);
 				System.out.println(TankModel.this.leftNeighbor);
 			}
-		}, 30000);
+		}, 2000);
 	}
+
+	protected void initiateSnapshot() {
+		this.isInitiator = true;
+		this.localState = this.fishies.size() - fadingFishCounter;
+		this.recMode = RecordingMode.BOTH;
+		this.hasSnapshotCollectToken = true;
+		this.snapshotCollector = new CollectSnapshot();
+		this.forwarder.sendSnapshotMarker(this.leftNeighbor);
+		this.forwarder.sendSnapshotMarker(this.rightNeighbor);
+	}
+
+
+
+	protected synchronized void handleReceivedMarker(String dir) {
+		RecordingMode direction;
+		if (dir.equals("left"))
+			direction = RecordingMode.RIGHT;
+		else
+			direction = RecordingMode.LEFT;
+
+		if (this.recMode == RecordingMode.IDLE) {
+			this.localState = this.fishies.size() - fadingFishCounter;
+			this.recMode = direction;
+			this.forwarder.sendSnapshotMarker(this.leftNeighbor);
+			this.forwarder.sendSnapshotMarker(this.rightNeighbor);
+		} else {
+			if (this.recMode == RecordingMode.BOTH) {
+				this.recMode = direction;
+			} else {
+				this.recMode = RecordingMode.IDLE;
+				if (hasSnapshotCollectToken) {
+					this.hasSnapshotCollectToken = false;
+					this.snapshotCollector.addFishies(this.localState);
+					forwarder.sendSnapshotCollectionMarker(this.leftNeighbor, this.snapshotCollector);
+					this.snapshotCollector = null;
+				}
+			}
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 
 	public boolean hasToken() {
